@@ -82,6 +82,7 @@ class _HomeState extends State<Home> {
   CameraImage? cameraImage;
   CameraController? cameraController;
   String output = '';
+  Image? image;
 
   @override
   initState() {
@@ -89,34 +90,6 @@ class _HomeState extends State<Home> {
     loadCamera();
     loadDetectionModel();
   }
-
-  // late Interpreter interpreter;
-  // loadModel() async {
-  //   interpreter = await Interpreter.fromAsset('assets/model.tflite');
-  // }
-
-  // runModel() async {
-  //   if(cameraImage != null) {
-  //     var predictions = await Tflite.runModelOnFrame(bytesList: cameraImage!.planes.map((plane) {
-  //       return plane.bytes;
-  //     }).toList(),
-  //       imageHeight: cameraImage!.height,
-  //       imageWidth: cameraImage!.width,
-  //       imageMean: 127.5,
-  //       imageStd: 127.5,
-  //       rotation: 90,
-  //       numResults: 2,
-  //       threshold:0.1,
-  //       asynch: true,
-  //     );
-  //
-  //     predictions!.forEach((element) {
-  //       setState(() {
-  //         output = element['label'];
-  //       });
-  //     });
-  //   }
-  // }
 
   loadCamera() {
     cameraController = CameraController(
@@ -138,6 +111,11 @@ class _HomeState extends State<Home> {
     });
   }
 
+  Future<void> takePicture() async {
+    XFile file = await cameraController!.takePicture();
+    image = Image.memory(await file.readAsBytes());
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -154,9 +132,9 @@ class _HomeState extends State<Home> {
               child: !cameraController!.value.isInitialized
                   ? Container()
                   : AspectRatio(
-                      aspectRatio: cameraController!.value.aspectRatio,
-                      child: CameraPreview(cameraController!),
-                    ),
+                aspectRatio: cameraController!.value.aspectRatio,
+                child: CameraPreview(cameraController!),
+              ),
             ),
           ),
           const SizedBox(
@@ -168,6 +146,10 @@ class _HomeState extends State<Home> {
               fontWeight: FontWeight.bold,
               fontSize: 12,
             ),
+          ),
+          ElevatedButton(
+            onPressed: takePicture,
+            child: const Text('Take Picture'),
           ),
         ],
       ),
