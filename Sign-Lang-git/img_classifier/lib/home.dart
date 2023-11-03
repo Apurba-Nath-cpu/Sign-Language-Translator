@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:tflite/tflite.dart';
 import 'package:image/image.dart' as IMG;
 import 'dart:typed_data';
+import 'dart:io' as IO;
 
 import 'main.dart';
 
@@ -46,6 +47,7 @@ class _HomeState extends State<Home> {
   CameraController? cameraController;
   String output = '';
   Image? img;
+  String? pictureResult = "";
 
   @override
   initState() {
@@ -67,28 +69,32 @@ class _HomeState extends State<Home> {
         setState(() {});
       }
     });
+    // cameraController!.setFlashMode(FlashMode.off);
   }
 
-  Future<void> takePicture() async {
+  Future<String?> takePicture() async {
     try {
       XFile file = await cameraController!.takePicture();
       Uint8List bytes = await file.readAsBytes();
       IMG.Image? src = IMG.decodeImage(bytes);
 
       if (src != null) {
-        IMG.Image destImage = src; //IMG.copyCrop(src, 300, 990, 560, 560);
-
+        IMG.Image destImage = IMG.copyCrop(
+            src, src.width ~/ 2 - 64, src.height ~/ 2 - 64, 128, 128);
         IMG.Image resizedImage =
             IMG.copyResize(destImage, width: 64, height: 64);
+        IO.File('/storage/emulated/0/Pictures/Sign Language/${DateTime.now().millisecondsSinceEpoch}.jpg')
+            .writeAsBytesSync(IMG.encodeJpg(resizedImage));
+
         var res = await Tflite.runModelOnBinary(
             binary: imageToByteListFloat32(resizedImage, 64, 0.0, 255.0),
             numResults: 29);
 
-        print("REEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEESULT");
-        print(res);
+        print("REEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEESULT:\n $res");
+        return res![0]["label"];
       }
     } catch (e) {
-      print("runModelError: " + e.toString());
+      print("runModelError: $e");
     }
   }
 
@@ -109,7 +115,28 @@ class _HomeState extends State<Home> {
                   ? Container()
                   : AspectRatio(
                       aspectRatio: cameraController!.value.aspectRatio,
-                      child: CameraPreview(cameraController!),
+                      child: Stack(
+                        children: <Widget>[
+                          CameraPreview(cameraController!),
+                          Center(
+                            child: Transform.translate(
+                              offset: const Offset(0, -28),
+                              child: Container(
+                                width: 120,
+                                height: 120,
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color:
+                                        Colors.red, // You can change the color
+                                    width:
+                                        2.0, // You can change the border width
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
             ),
           ),
@@ -123,8 +150,24 @@ class _HomeState extends State<Home> {
               fontSize: 12,
             ),
           ),
+          // Add text box to print the current value of pictureResult
+          Text(
+            pictureResult ?? "",
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
+          ),
           ElevatedButton(
-            onPressed: takePicture,
+            onPressed: () {
+              takePicture().then((result) {
+                // You can use the result here to update the UI.
+                // In this example, we will use setState to update the UI.
+                setState(() {
+                  pictureResult = result;
+                });
+              });
+            },
             child: const Text('Take Picture'),
           ),
         ],
