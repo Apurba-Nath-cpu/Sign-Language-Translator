@@ -102,7 +102,7 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Center(child: Text('Live Sign Language Translation')),
+        title: const Center(child: Text('Sign Language Translation')),
       ),
       body: Column(
         children: [
@@ -151,11 +151,14 @@ class _HomeState extends State<Home> {
             ),
           ),
           // Add text box to print the current value of pictureResult
-          Text(
-            pictureResult ?? "",
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Text(
+              pictureResult ?? "",
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
             ),
           ),
           ElevatedButton(
@@ -168,7 +171,7 @@ class _HomeState extends State<Home> {
                 });
               });
             },
-            child: const Text('Take Picture'),
+            child: const Text('Translate'),
           ),
         ],
       ),
